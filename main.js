@@ -1,14 +1,14 @@
 const Discord = require('discord.js');
 const agith = require('./agith');
+//const urlGrabber = require('./urlGrabber');
 
 const client = new Discord.Client();
-const broadcast = client.createVoiceBroadcast();
+var broadcast;
 
 const token = 'MjcyMTE1ODg1MzY2NDQ0MDM1.DCHYow.Ms2WquOkJc68LpGgozdom8BvT5o';
 
 var agithVoiceID; //to keep track of which voice channel Agith is in
-var isPlaying; //keeps track of if a song is playing
-var isPaused; //keeps track of if a song is paused
+var isBroadcast; //keeps track of if agith should make a new broadcast
 
 client.on('ready', () => {
   console.log('I am ready!');
@@ -17,6 +17,8 @@ client.on('ready', () => {
 
 //commands
 client.on('message', message => {
+  //client.sweepMessages(45);
+
   if(message.content == 'ping') {
     //message.reply('pong');
     //message.channel.send('Test');
@@ -25,50 +27,76 @@ client.on('message', message => {
                            //allows you to use it in other parts of code
     message.channel.send("Happy birthday, Via.");
   }
+
   //join voice channel
   if(message == "agith join") {
-    agithVoiceID = message.member.voiceChannelID;
-    agith.join(message, agithVoiceID);
+    if(message.member.voiceChannelID == null) {
+      agith.noVoiceChannel(message);
+      return;
+    }
+    agith.join(message);
   }
+
   //leave voice channel
   if(message == "agith leave") {
-    agith.leave(message, agithVoiceID);
+    if(message.member.voiceChannelID == null) {
+      agith.noVoiceChannel(message);
+      return;
+    }
+    agith.leave(message);
   }
 
   //play file
   if(message == "agith song") {
-    agithVoiceID = message.member.voiceChannelID;
-    broadcast.end();
-    isPlaying = true;
-    isPaused = false;
-    agith.song(message, broadcast);
+    if(message.member.voiceChannelID == null) {
+      agith.noVoiceChannel(message);
+      return;
+    }
+    if(isBroadcast == false || isBroadcast == undefined) {
+        broadcast = client.createVoiceBroadcast();
+        isBroadcast = true;
+    }
+    agith.song(message);
   }
 
   //pause file
-  if(message == "agith pause" && isPaused == false) {
-    isPaused = true;
+  if(message == "agith pause") {
     agith.pause(message, broadcast);
   }
 
   //resume paused music
-  if(message == "agith resume" && isPaused) {
-    isPaused = false;
+  if(message == "agith resume") {
     agith.resume(message, broadcast);
   }
 
   //stop playing music
   if(message == "agith stop" || message == "agith end") {
-    isPlaying = false;
     agith.stop(message, broadcast);
+    isBroadcast = false;
   }
 
+  //streaming music from YT
   if(message == "agith play " + message.content.substring(11)) {
-    //broadcast.destroy();
-    agithVoiceID = message.member.voiceChannelID;
+    if(message.member.voiceChannelID == null) {
+      agith.noVoiceChannel(message);
+      return;
+    }
+    if(isBroadcast == false || isBroadcast == undefined) {
+        broadcast = client.createVoiceBroadcast();
+        isBroadcast = true;
+    }
     var videoURL = message.content.substring(11);
-    agith.stream(message, broadcast, videoURL, agithVoiceID);
-    isPlaying = true;
+    if(!videoURL.includes('youtube.com/watch?v=')) {
+      /* YT API function here */
+      //urlGrabber.start();
+      //videoURL = 'youtube.com/watch?v=' + urlGrabber.getVideoID(null, videoURL);
+    }
+    agith.stream(message, videoURL, broadcast);
     isPaused = false;
+  }
+
+  if(message == "agith queue") {
+    agith.printQueue(message);
   }
 
   //purge or delete messages
