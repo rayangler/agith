@@ -5,7 +5,7 @@ const agith = require('./agith');
 const client = new Discord.Client();
 var broadcast;
 
-const token = 'MjcyMTE1ODg1MzY2NDQ0MDM1.DCHYow.Ms2WquOkJc68LpGgozdom8BvT5o';
+const token = '';
 
 var agithVoiceID; //to keep track of which voice channel Agith is in
 var isBroadcast; //keeps track of if agith should make a new broadcast
